@@ -1,14 +1,11 @@
 package command
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 
 	"github.com/Jh123x/pokedex/internal/consts"
-	"github.com/Jh123x/pokedex/internal/pokecache"
+	"github.com/Jh123x/pokedex/internal/utils"
 )
 
 type Area struct {
@@ -34,11 +31,10 @@ var (
 	urlNode    = &URLNode{
 		NextURL: &nextURL,
 	}
-	cache = pokecache.NewCache()
 )
 
-func GetPokedexMapGen(isFwd bool) func() error {
-	return func() error {
+func GetPokedexMapGen(isFwd bool) consts.Command {
+	return func(_ []string) error {
 		var currURL string
 
 		if isFwd && urlNode.NextURL != nil {
@@ -49,7 +45,7 @@ func GetPokedexMapGen(isFwd bool) func() error {
 			currURL = *urlNode.PrevURL
 		}
 
-		result, nextNode, err := getResult(currURL, cache, urlNode)
+		result, nextNode, err := getResult(currURL, urlNode)
 		if err != nil {
 			return err
 		}
@@ -63,22 +59,9 @@ func GetPokedexMapGen(isFwd bool) func() error {
 	}
 }
 
-func getResult(currURL string, cache *pokecache.Cache, urlNode *URLNode) ([]string, *URLNode, error) {
-	body, ok := cache.Get(currURL)
-	if !ok {
-		resp, err := http.Get(currURL)
-		if err != nil {
-			return nil, urlNode, err
-		}
-
-		body, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, urlNode, err
-		}
-	}
-
-	var data *AreaResp
-	if err := json.Unmarshal(body, &data); err != nil {
+func getResult(currURL string, urlNode *URLNode) ([]string, *URLNode, error) {
+	data, err := utils.GetResult[AreaResp](currURL)
+	if err != nil {
 		return nil, urlNode, err
 	}
 

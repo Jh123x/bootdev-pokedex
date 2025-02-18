@@ -7,12 +7,13 @@ import (
 	"strings"
 
 	"github.com/Jh123x/pokedex/internal/command"
+	"github.com/Jh123x/pokedex/internal/consts"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    consts.Command
 }
 
 var cliCommands map[string]cliCommand
@@ -31,13 +32,18 @@ func main() {
 		},
 		"map": {
 			name:        "map",
-			description: "Locations",
+			description: "Next locations",
 			callback:    command.GetPokedexMapGen(true),
 		},
 		"mapb": {
 			name:        "map",
-			description: "Locations",
+			description: "Previous location page",
 			callback:    command.GetPokedexMapGen(false),
+		},
+		"explore": {
+			name:        "explore",
+			description: "Explore location to get pokemons",
+			callback:    command.CommandExplore,
 		},
 	}
 
@@ -49,24 +55,24 @@ func main() {
 			panic(err)
 		}
 
-		inputValues := cleanInput(input)
-		if len(inputValues) == 0 {
+		command, args := cleanInput(input)
+		if command == "" {
 			continue
 		}
 
-		command := strings.ToLower(inputValues[0])
+		command = strings.ToLower(command)
 		cmd, ok := cliCommands[command]
 		if !ok {
 			fmt.Printf("command not found: %s\n", command)
 			continue
 		}
-		if err := cmd.callback(); err != nil {
+		if err := cmd.callback(args); err != nil {
 			panic(err)
 		}
 	}
 }
 
-func helpCmd() error {
+func helpCmd(_ []string) error {
 	fmt.Println("Welcome to the Pokedex!\nUsage:")
 	fmt.Println("")
 	for _, v := range cliCommands {
@@ -76,7 +82,7 @@ func helpCmd() error {
 	return nil
 }
 
-func cleanInput(text string) []string {
+func cleanInput(text string) (string, []string) {
 	values := make([]string, 0)
 	for _, word := range strings.Split(text, " ") {
 		if word == "" {
@@ -86,5 +92,9 @@ func cleanInput(text string) []string {
 		values = append(values, strings.Trim(word, " \n"))
 	}
 
-	return values
+	if len(values) == 0 {
+		return "", nil
+	}
+
+	return values[0], values[1:]
 }
