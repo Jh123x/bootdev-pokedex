@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const refreshInterval = time.Second * 5
+
 type cacheEntry struct {
 	val       []byte
 	createdAt time.Time
@@ -27,7 +29,21 @@ func NewCache() *Cache {
 }
 
 func (c *Cache) reapLoop() {
-	// TODO
+	ticker := time.NewTicker(refreshInterval)
+	defer ticker.Stop()
+	for {
+		<-ticker.C
+		currentTime := time.Now()
+		for k, v := range c.cache {
+			if !currentTime.After(v.createdAt.Add(refreshInterval)) {
+				continue
+			}
+			c.mutex.Lock()
+			delete(c.cache, k)
+			c.mutex.Unlock()
+		}
+		ticker.Reset(refreshInterval)
+	}
 }
 
 func (c *Cache) Add(key string, val []byte) {

@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/Jh123x/pokedex/internal/consts"
+	"github.com/Jh123x/pokedex/internal/pokecache"
 )
 
 type Area struct {
@@ -22,59 +23,63 @@ type AreaResp struct {
 	Results  []Area `json:"results"`
 }
 
+type URLNode struct {
+	NextURL *string
+	CurrURL *string
+	PrevURL *string
+}
+
 var (
-	currMap  = make([][]string, 0, 51)
-	currPage = -1
+	nextURL, _ = url.JoinPath(consts.BASE_URL, consts.AREA_PATH)
+	urlNode    = &URLNode{
+		NextURL: &nextURL,
+	}
+	cache = pokecache.NewCache()
 )
 
 func GetPokedexMapGen(isFwd bool) func() error {
 	return func() error {
-		if isFwd {
-			currPage += 1
-		} else {
-			if currPage > 0 {
-				currPage -= 1
-			}
+		var currURL string
+
+		if isFwd && urlNode.NextURL != nil {
+			currURL = *urlNode.NextURL
 		}
 
-		var result []string
-		if currPage < len(currMap) {
-			result = currMap[currPage]
-		} else {
-			var err error
-			result, err = getResult()
-			if err != nil {
-				return err
-			}
-			currMap = append(currMap, result)
+		if !isFwd && urlNode.PrevURL != nil {
+			currURL = *urlNode.PrevURL
+		}
+
+		result, nextNode, err := getResult(currURL, cache, urlNode)
+		if err != nil {
+			return err
 		}
 
 		for _, loc := range result {
 			fmt.Println(loc)
 		}
 
+		urlNode = nextNode
 		return nil
 	}
 }
 
-var (
-	currURL, _ = url.JoinPath(consts.BASE_URL, consts.AREA_PATH)
-)
+func getResult(currURL string, cache *pokecache.Cache, urlNode *URLNode) ([]string, *URLNode, error) {
+	body, ok := cache.Get(currURL)
+	if !ok {
+		resp, err := http.Get(currURL)
+		if err != nil {
+			return nil, urlNode, err
+		}
 
-func getResult() ([]string, error) {
-	resp, err := http.Get(currURL)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+		body, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, urlNode, err
+		}
 	}
 
 	var data *AreaResp
 	if err := json.Unmarshal(body, &data); err != nil {
-		return nil, err
+		return nil, urlNode, err
 	}
 
 	acc := make([]string, 0, len(data.Results))
@@ -82,7 +87,11 @@ func getResult() ([]string, error) {
 		acc = append(acc, loc.Name)
 	}
 
-	currURL = data.Next
+	nextNode := &URLNode{
+		NextURL: &data.Next,
+		CurrURL: &currURL,
+		PrevURL: &data.Previous,
+	}
 
-	return acc, nil
+	return acc, nextNode, nil
 }
