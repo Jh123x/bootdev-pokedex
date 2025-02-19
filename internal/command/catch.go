@@ -24,7 +24,7 @@ func CommandCatch(args []string, playerInfo *consts.PlayerInfo) error {
 	}
 
 	playerRate := rand.Intn(256)
-	if playerRate > res.CaptureRate {
+	if playerRate <= res.CaptureRate {
 		fmt.Printf("%s was caught!\n", pkmName)
 		if err := storePokemonInfo(pkmName, playerInfo); err != nil {
 			return err

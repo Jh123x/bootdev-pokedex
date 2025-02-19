@@ -60,6 +60,11 @@ func main() {
 			description: "Look at your caught pokemon",
 			callback:    command.CommandInspect,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Look at your pokedex",
+			callback:    command.CommandPokedex,
+		},
 	}
 
 	scanner := bufio.NewReader(os.Stdin)
