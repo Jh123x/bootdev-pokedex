@@ -34,7 +34,7 @@ var (
 )
 
 func GetPokedexMapGen(isFwd bool) consts.Command {
-	return func(_ []string) error {
+	return func(_ []string, _ *consts.PlayerInfo) error {
 		var currURL string
 
 		if isFwd && urlNode.NextURL != nil {

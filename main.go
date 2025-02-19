@@ -16,9 +16,14 @@ type cliCommand struct {
 	callback    consts.Command
 }
 
-var cliCommands map[string]cliCommand
+var (
+	cliCommands map[string]cliCommand
+)
 
 func main() {
+	playerInfo := &consts.PlayerInfo{
+		CaughtPokemons: make(map[string]*consts.PokemonInspectInfo, 100),
+	}
 	cliCommands = map[string]cliCommand{
 		"exit": {
 			name:        "exit",
@@ -50,6 +55,11 @@ func main() {
 			description: "Catch a pokemon",
 			callback:    command.CommandCatch,
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "Look at your caught pokemon",
+			callback:    command.CommandInspect,
+		},
 	}
 
 	scanner := bufio.NewReader(os.Stdin)
@@ -71,13 +81,13 @@ func main() {
 			fmt.Printf("command not found: %s\n", command)
 			continue
 		}
-		if err := cmd.callback(args); err != nil {
+		if err := cmd.callback(args, playerInfo); err != nil {
 			panic(err)
 		}
 	}
 }
 
-func helpCmd(_ []string) error {
+func helpCmd(_ []string, _ *consts.PlayerInfo) error {
 	fmt.Println("Welcome to the Pokedex!\nUsage:")
 	fmt.Println("")
 	for _, v := range cliCommands {

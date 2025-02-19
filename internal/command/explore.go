@@ -8,7 +8,7 @@ import (
 	"github.com/Jh123x/pokedex/internal/utils"
 )
 
-func CommandExplore(args []string) error {
+func CommandExplore(args []string, _ *consts.PlayerInfo) error {
 	if len(args) != 1 {
 		fmt.Println("explore only takes location as the argument")
 	}

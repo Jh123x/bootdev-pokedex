@@ -1,6 +1,46 @@
 package consts
 
-type Command func(args []string) error
+import (
+	"fmt"
+	"strings"
+)
+
+type Stats struct {
+	HP             int
+	Attack         int
+	Defense        int
+	SpecialAttack  int
+	SpecialDefense int
+	Speed          int
+}
+
+func (s Stats) String() string {
+	return fmt.Sprintf(
+		"Stats:\n  -hp: %d\n  -attack: %d\n  -defense: %d\n  -special-attack: %d\n  -special-defense: %d\n  -speed: %d",
+		s.HP, s.Attack, s.Defense, s.SpecialAttack, s.SpecialDefense, s.Speed,
+	)
+}
+
+type PokemonInspectInfo struct {
+	Name   string
+	Height int
+	Weight int
+	Stats  Stats
+	Types  []string
+}
+
+func (p PokemonInspectInfo) String() string {
+	return fmt.Sprintf(
+		"Name: %s\nHeight: %d\nWeight: %d\n%s\n%s",
+		p.Name, p.Height, p.Weight, p.Stats.String(), strings.Join(append([]string{"Types:"}, p.Types...), "\n  -"),
+	)
+}
+
+type PlayerInfo struct {
+	CaughtPokemons map[string]*PokemonInspectInfo
+}
+
+type Command func(args []string, playerInfo *PlayerInfo) error
 
 type VersionDetail struct {
 	Rate    int              `json:"rate"`
@@ -121,7 +161,7 @@ type PokemonInfo struct {
 	Sprites                SpriteDetail       `json:"sprites"`
 	Cries                  CryInfo            `json:"cries"`
 	Stats                  []StatInfo         `json:"stats"`
-	Types                  []TypeInfo         `json:"type"`
+	Types                  []TypeInfo         `json:"types"`
 	PastTypes              []GenerationType   `json:"past_types"`
 }
 
