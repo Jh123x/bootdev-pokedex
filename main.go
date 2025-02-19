@@ -45,6 +45,11 @@ func main() {
 			description: "Explore location to get pokemons",
 			callback:    command.CommandExplore,
 		},
+		"catch": {
+			name:        "catch",
+			description: "Catch a pokemon",
+			callback:    command.CommandCatch,
+		},
 	}
 
 	scanner := bufio.NewReader(os.Stdin)
